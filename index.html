@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pinball</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 15%,#24335f,#090b18 65%);font-family:system-ui,sans-serif;color:#fff}
+.wrap{text-align:center}h1{margin:0 0 10px;letter-spacing:.12em;text-shadow:0 0 18px #7cf}p{margin:4px 0 12px;opacity:.8;font-size:14px}
+canvas{display:block;width:min(92vw,420px);height:auto;max-height:78vh;border:3px solid #9ff;border-radius:14px;box-shadow:0 0 28px #2de,0 0 70px #3156}
+button{margin-top:12px;padding:10px 22px;border:1px solid #9ff;border-radius:999px;background:#142044;color:#fff;font-weight:700;cursor:pointer}button:hover{background:#20366b}
+</style>
+</head>
+<body><div class="wrap"><h1>PINBALL</h1><p>← → / A D でフリッパー操作　｜　SPACEでスタート</p><canvas id="game" width="420" height="700"></canvas><button id="restart">RESTART</button></div>
+<script>
+const c=document.getElementById('game'),x=c.getContext('2d'),W=c.width,H=c.height;
+let ball,score=0,lives=3,playing=false,left=false,right=false,last=0;
+const bumpers=[{x:105,y:185,r:34},{x:315,y:185,r:34},{x:210,y:275,r:38}];
+const reset=()=>{ball={x:210,y:620,vx:(Math.random()-.5)*2,vy:-8,r:10};playing=true};
+function key(e,on){if(['ArrowLeft','a','A'].includes(e.key))left=on;if(['ArrowRight','d','D'].includes(e.key))right=on;if(e.code==='Space'&&on&&!playing)reset()}
+addEventListener('keydown',e=>key(e,true));addEventListener('keyup',e=>key(e,false));document.getElementById('restart').onclick=()=>{score=0;lives=3;reset()};
+function circ(o){x.beginPath();x.arc(o.x,o.y,o.r,0,Math.PI*2);x.fill();x.stroke()}
+function draw(){
+ x.clearRect(0,0,W,H);
+ let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#101d42');g.addColorStop(1,'#070a16');x.fillStyle=g;x.fillRect(0,0,W,H);
+ x.strokeStyle='#6ff';x.lineWidth=5;x.strokeRect(12,12,W-24,H-24);
+ x.fillStyle='#fff';x.font='bold 20px system-ui';x.fillText('SCORE '+score,28,42);x.fillText('BALLS '+lives,315,42);
+ bumpers.forEach((b,i)=>{x.shadowBlur=20;x.shadowColor=i===2?'#f6f':'#6ff';x.fillStyle=i===2?'#622b77':'#174d70';x.strokeStyle='#cff';circ(b);x.shadowBlur=0;x.fillStyle='#fff';x.font='bold 16px system-ui';x.textAlign='center';x.fillText(i===2?'★':'+',b.x,b.y+6);x.textAlign='left'});
+ // flippers
+ x.fillStyle='#ff4fd8';x.shadowBlur=15;x.shadowColor='#ff4fd8';
+ x.save();x.translate(130,625);x.rotate(left?-0.48:0.22);x.fillRect(-65,-9,75,18);x.restore();
+ x.save();x.translate(290,625);x.rotate(right?0.48:-0.22);x.fillRect(-10,-9,75,18);x.restore();x.shadowBlur=0;
+ x.fillStyle='#fff';x.shadowBlur=18;x.shadowColor='#fff';circ(ball);x.shadowBlur=0;
+}
+function hitBumper(b){let dx=ball.x-b.x,dy=ball.y-b.y,d=Math.hypot(dx,dy),min=ball.r+b.r;if(d<min){let nx=dx/d,ny=dy/d;ball.x=b.x+nx*min;ball.y=b.y+ny*min;let dot=ball.vx*nx+ball.vy*ny;ball.vx-=2.05*dot*nx;ball.vy-=2.05*dot*ny;ball.vx+=nx*2;ball.vy+=ny*2;score+=25}}
+function loop(t){let dt=Math.min((t-last)/16.67,2);last=t;if(playing){
+ ball.vy+=.32*dt;ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+ if(ball.x<25||ball.x>W-25){ball.x=Math.max(25,Math.min(W-25,ball.x));ball.vx*=-.9}
+ if(ball.y<55){ball.y=55;ball.vy=Math.abs(ball.vy)}
+ bumpers.forEach(hitBumper);
+ // simple flipper collision zones
+ if(ball.y>605&&ball.y<650){
+  if(left&&ball.x<190&&ball.vy>0){ball.vy=-10;ball.vx=-3}
+  if(right&&ball.x>230&&ball.vy>0){ball.vy=-10;ball.vx=3}
+ }
+ if(ball.y>H+20){lives--;if(lives>0)reset();else playing=false}
+ } draw();requestAnimationFrame(loop)}
+draw();requestAnimationFrame(loop);
+</script></body></html>
