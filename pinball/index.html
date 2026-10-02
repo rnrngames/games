@@ -36,13 +36,13 @@ function circle(o,fill,stroke){ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
 function frame(){
  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#101d42');g.addColorStop(1,'#070a16');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  ctx.strokeStyle='#6ff';ctx.lineWidth=5;ctx.strokeRect(12,12,W-24,H-24);
- ctx.fillStyle='#fff';ctx.font='bold 19px system-ui';ctx.fillText('SCORE '+score,28,42);ctx.fillText('BALLS '+lives,315,42);
+ ctx.fillStyle='#fff';ctx.font='bold 19px system-ui';ctx.fillText('SCORE '+score,28,42);ctx.fillText('∞ BALL',315,42);
  bumpers.forEach((b,i)=>{ctx.shadowBlur=18;ctx.shadowColor=i===2?'#f6f':'#6ff';circle(b,i===2?'#632b78':'#174d70','#cff');ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.fillText(i===2?'★':'+',b.x,b.y+7);ctx.textAlign='left'});
  ctx.fillStyle='#ff4fd8';ctx.shadowBlur=14;ctx.shadowColor='#ff4fd8';
  ctx.save();ctx.translate(130,630);ctx.rotate(left?-0.48:0.2);ctx.fillRect(-65,-9,75,18);ctx.restore();
  ctx.save();ctx.translate(290,630);ctx.rotate(right?0.48:-0.2);ctx.fillRect(-10,-9,75,18);ctx.restore();ctx.shadowBlur=0;
  if(ball){ctx.shadowBlur=18;ctx.shadowColor='#fff';circle(ball,'#fff','#fff');ctx.shadowBlur=0}
- if(!running){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(35,290,350,110);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 30px system-ui';ctx.fillText('GAME OVER',210,335);ctx.font='16px system-ui';ctx.fillText('画面をタップして再スタート',210,370);ctx.textAlign='left'}
+ if(!running){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(35,290,350,110);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 30px system-ui';ctx.fillText('PINBALL',210,335);ctx.font='16px system-ui';ctx.fillText('画面をタップしてスタート',210,370);ctx.textAlign='left'}
 }
 function update(){
  if(running){
@@ -51,7 +51,7 @@ function update(){
   if(ball.y<58){ball.y=58;ball.vy=Math.abs(ball.vy)}
   for(const b of bumpers){let dx=ball.x-b.x,dy=ball.y-b.y,d=Math.hypot(dx,dy),min=ball.r+b.r;if(d<min){let nx=dx/d,ny=dy/d;ball.x=b.x+nx*min;ball.y=b.y+ny*min;let dot=ball.vx*nx+ball.vy*ny;ball.vx-=2.05*dot*nx;ball.vy-=2.05*dot*ny;ball.vx+=nx*2;ball.vy+=ny*2;score+=25}}
   if(ball.y>605&&ball.y<655){if(left&&ball.x<190&&ball.vy>0){ball.vy=-10;ball.vx=-3;score+=5}if(right&&ball.x>230&&ball.vy>0){ball.vy=-10;ball.vx=3;score+=5}}
-  if(ball.y>H+20){lives--;if(lives>0)spawn();else{running=false;ball=null}}
+  if(ball.y>H+20){ball.y=610;ball.x=210;ball.vx=(Math.random()-.5)*2.5;ball.vy=-8;score+=100;}
  }
  frame();requestAnimationFrame(update)
 }
