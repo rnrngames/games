@@ -2,24 +2,36 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Pinball Game</title>
 <style>
-html,body{margin:0;min-height:100%;background:#090b18;color:#fff;font-family:system-ui,sans-serif}
-body{display:grid;place-items:center;padding:18px;box-sizing:border-box}
-main{text-align:center}h1{margin:0 0 6px;letter-spacing:.12em}p{margin:0 0 12px;opacity:.8;font-size:13px}
-canvas{width:min(94vw,420px);height:auto;border:3px solid #9ff;border-radius:14px;box-shadow:0 0 28px #2de;background:#0b1230}
-button{margin-top:12px;padding:10px 24px;border:1px solid #9ff;border-radius:999px;background:#142044;color:#fff;font-weight:700}
+html,body{margin:0;min-height:100%;background:#090b18;color:#fff;font-family:system-ui,sans-serif;touch-action:none}
+body{display:grid;place-items:center;padding:12px;box-sizing:border-box}
+main{text-align:center}h1{margin:0 0 6px;letter-spacing:.12em}p{margin:0 0 8px;opacity:.8;font-size:13px}
+canvas{width:min(94vw,420px);height:auto;border:3px solid #9ff;border-radius:14px;box-shadow:0 0 28px #2de;background:#0b1230;touch-action:none}
+button{margin-top:10px;padding:10px 24px;border:1px solid #9ff;border-radius:999px;background:#142044;color:#fff;font-weight:700;font-size:16px}
 </style>
 </head>
-<body><main><h1>PINBALL</h1><p>← → / A D：フリッパー　SPACE：スタート</p><canvas id="game" width="420" height="700"></canvas><br><button onclick="restart()">RESTART</button></main>
+<body><main><h1>PINBALL</h1><p>タップ：フリッパー　画面中央をタップ：スタート</p><canvas id="game" width="420" height="700"></canvas><br><button onclick="restart()">RESTART</button></main>
 <script>
 const c=document.getElementById('game'),ctx=c.getContext('2d'),W=c.width,H=c.height;
 let ball,score,lives,running,left=false,right=false;
 const bumpers=[{x:105,y:190,r:34},{x:315,y:190,r:34},{x:210,y:285,r:40}];
-function restart(){score=0;lives=3;spawn()}function spawn(){ball={x:210,y:610,vx:(Math.random()-.5)*2.5,vy:-8,r:9};running=true}
+function restart(){score=0;lives=3;spawn()}
+function spawn(){ball={x:210,y:610,vx:(Math.random()-.5)*2.5,vy:-8,r:9};running=true}
 addEventListener('keydown',e=>{if(['ArrowLeft','a','A'].includes(e.key))left=true;if(['ArrowRight','d','D'].includes(e.key))right=true;if(e.code==='Space'&&!running)spawn()});
 addEventListener('keyup',e=>{if(['ArrowLeft','a','A'].includes(e.key))left=false;if(['ArrowRight','d','D'].includes(e.key))right=false});
+function touch(e){
+ e.preventDefault();
+ if(!running){spawn();return}
+ const rect=c.getBoundingClientRect(),x=(e.clientX-rect.left)*W/rect.width,y=(e.clientY-rect.top)*H/rect.height;
+ if(x<W/2)left=true;else right=true;
+}
+function touchEnd(e){e.preventDefault();left=false;right=false}
+c.addEventListener('pointerdown',touch);
+c.addEventListener('pointerup',touchEnd);
+c.addEventListener('pointercancel',touchEnd);
+c.addEventListener('pointerleave',touchEnd);
 function circle(o,fill,stroke){ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.stroke()}
 function frame(){
  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#101d42');g.addColorStop(1,'#070a16');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -30,6 +42,7 @@ function frame(){
  ctx.save();ctx.translate(130,630);ctx.rotate(left?-0.48:0.2);ctx.fillRect(-65,-9,75,18);ctx.restore();
  ctx.save();ctx.translate(290,630);ctx.rotate(right?0.48:-0.2);ctx.fillRect(-10,-9,75,18);ctx.restore();ctx.shadowBlur=0;
  if(ball){ctx.shadowBlur=18;ctx.shadowColor='#fff';circle(ball,'#fff','#fff');ctx.shadowBlur=0}
+ if(!running){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(35,290,350,110);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 30px system-ui';ctx.fillText('GAME OVER',210,335);ctx.font='16px system-ui';ctx.fillText('画面をタップして再スタート',210,370);ctx.textAlign='left'}
 }
 function update(){
  if(running){
@@ -38,7 +51,7 @@ function update(){
   if(ball.y<58){ball.y=58;ball.vy=Math.abs(ball.vy)}
   for(const b of bumpers){let dx=ball.x-b.x,dy=ball.y-b.y,d=Math.hypot(dx,dy),min=ball.r+b.r;if(d<min){let nx=dx/d,ny=dy/d;ball.x=b.x+nx*min;ball.y=b.y+ny*min;let dot=ball.vx*nx+ball.vy*ny;ball.vx-=2.05*dot*nx;ball.vy-=2.05*dot*ny;ball.vx+=nx*2;ball.vy+=ny*2;score+=25}}
   if(ball.y>605&&ball.y<655){if(left&&ball.x<190&&ball.vy>0){ball.vy=-10;ball.vx=-3;score+=5}if(right&&ball.x>230&&ball.vy>0){ball.vy=-10;ball.vx=3;score+=5}}
-  if(ball.y>H+20){lives--;if(lives>0)spawn();else running=false}
+  if(ball.y>H+20){lives--;if(lives>0)spawn();else{running=false;ball=null}}
  }
  frame();requestAnimationFrame(update)
 }
